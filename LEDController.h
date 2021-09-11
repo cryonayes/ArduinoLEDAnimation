@@ -42,7 +42,7 @@ class LEDController {
 
         CRGBArray<numberOfLEDs> leds;
         AnimationTypes selectedAnimation;
-        
+
         LEDController(LEDControllerSettings config): config(config) {
             color = CRGB(255, 0, 0);
             FastLED.setMaxPowerInVoltsAndMilliamps(config.powerSettings.volt, config.powerSettings.miliamps);
@@ -72,7 +72,7 @@ class LEDController {
         CRGB getColor() {
             return color;
         }
-        
+
         void setRainbowColor(uint8_t hue) {
             rainbowColor = CHSV(hue, 255, 255);
         }
@@ -123,7 +123,7 @@ class LEDController {
             }
             fill_rainbow(leds, fillCount, rgb2hsv_approximate(color).hue, config.animationSettings.rainbowStep);
         }
-        
+
         void rainbowCycleAnimation(uint8_t fillCount) {
             if(fillCount == 0) {
                 fill_solid(leds, numberOfLEDs, CRGB::Black);
@@ -138,7 +138,7 @@ class LEDController {
                 return;
             }
             if (numberOfLEDs % 2 == 0) {
-                if (fillCount % 2 != 0) { fillCount++; } 
+                if (fillCount % 2 != 0) { fillCount++; }
                 fill_rainbow(&leds[numberOfLEDs / 2 - 1], (fillCount / 2 + 1), rgb2hsv_approximate(color).hue, config.animationSettings.rainbowStep);
 
                 for (int i = numberOfLEDs / 2 - 1; i >= 0; i--) {
@@ -169,7 +169,7 @@ class LEDController {
                 return;
             }
             if (numberOfLEDs % 2 == 0) {
-                if (fillCount % 2 != 0) { fillCount++; } 
+                if (fillCount % 2 != 0) { fillCount++; }
                 fill_rainbow(&leds[numberOfLEDs / 2 - 1], (fillCount / 2 + 1), rainbowColor.hue, config.animationSettings.rainbowStep);
 
                 for (int i = numberOfLEDs / 2 - 1; i >= 0; i--) {
@@ -212,12 +212,12 @@ class LEDController {
             for(int i = 0; i < config.animationSettings.peakTrailSize; i++) {
                 if (currentPeak >= 1 && currentPeak < numberOfLEDs) {
                     leds[currentPeak - i].setRGB(255, 255, 255);
-                }        
+                }
             }
 
             currentStep++;
             if (config.animationSettings.delayTrail > 0) {
-                FastLED.delay(config.animationSettings.delayTrail);   
+                FastLED.delay(config.animationSettings.delayTrail);
             }
         }
 };
