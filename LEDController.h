@@ -47,7 +47,7 @@ class LEDController {
             color = CRGB(255, 0, 0);
             FastLED.setMaxPowerInVoltsAndMilliamps(config.powerSettings.volt, config.powerSettings.miliamps);
             FastLED.setBrightness(config.brightness);
-            FastLED.addLeds<WS2812B, LEDPin, RGB>(leds, numberOfLEDs);
+            FastLED.addLeds<WS2812B, LEDPin, GRB>(leds, numberOfLEDs);
         };
 
     public:
