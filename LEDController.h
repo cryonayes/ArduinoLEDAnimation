@@ -9,12 +9,12 @@ enum AnimationTypes {
     ANIMATION_RAINBOW_CYCLE,
     ANIMATION_RAINBOW_MIDDLE,
     ANIMATION_RAINBOW_MIDDLE_CYCLE,
-    ANIMATION_SOLID_TRAIL
+    ANIMATION_SOLID_TRAIL,
+    ANIMATION_SOLID_TRAIL_DOUBLE
 };
 
 struct AnimationSettings {
     uint8_t rainbowStep;
-    uint8_t peakTrailSize;
     uint8_t countTrailStep;
     uint8_t delayTrail;
 };
@@ -107,6 +107,8 @@ class LEDController {
                 case ANIMATION_SOLID_TRAIL:
                     this->solidTrailAnimation(fillCount);
                     break;
+                case ANIMATION_SOLID_TRAIL_DOUBLE:
+                    this->solidTrailAnimationDouble(fillCount);
             }
             if (config.delay > 0) {
                 FastLED.delay(config.delay);
@@ -209,7 +211,34 @@ class LEDController {
             fill_solid(leds, numberOfLEDs, CRGB::Black);
             fill_solid(leds, fillCount, color);
 
-            for(int i = 0; i < config.animationSettings.peakTrailSize; i++) {
+            for(int i = 0; i < 1; i++) {
+                if (currentPeak >= 1 && currentPeak < numberOfLEDs) {
+                    leds[currentPeak - i].setRGB(255, 255, 255);
+                }
+            }
+
+            currentStep++;
+            if (config.animationSettings.delayTrail > 0) {
+                FastLED.delay(config.animationSettings.delayTrail);
+            }
+        }
+
+        void solidTrailAnimationDouble(uint8_t fillCount) {
+            static uint8_t currentStep = 0;
+            static uint8_t currentPeak = 0;
+
+            if (fillCount > currentPeak) {
+                currentPeak = fillCount;
+            }
+
+            if(currentStep % config.animationSettings.countTrailStep == 0 && fillCount < currentPeak) {
+                if(currentPeak > 0) { currentPeak--; }
+                currentStep = 0;
+            }
+            fill_solid(leds, numberOfLEDs, CRGB::Black);
+            fill_solid(leds, fillCount, color);
+
+            for(int i = 0; i < 2; i++) {
                 if (currentPeak >= 1 && currentPeak < numberOfLEDs) {
                     leds[currentPeak - i].setRGB(255, 255, 255);
                 }
