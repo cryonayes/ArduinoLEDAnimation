@@ -10,7 +10,13 @@ enum AnimationTypes {
     ANIMATION_RAINBOW_MIDDLE,
     ANIMATION_RAINBOW_MIDDLE_CYCLE,
     ANIMATION_SOLID_TRAIL,
-    ANIMATION_SOLID_TRAIL_DOUBLE
+    ANIMATION_SOLID_TRAIL_DOUBLE,
+    ANIMATION_SOLID_TRAIL_MIDDLE,
+    ANIMATION_SOLID_TRAIL_MIDDLE_DOUBLE,
+    ANIMATION_RAINBOW_TRAIL_MIDDLE,
+    ANIMATION_RAINBOW_TRAIL_MIDDLE_CYCLE,
+    ANIMATION_RAINBOW_TRAIL_DOUBLE_MIDDLE,
+    ANIMATION_RAINBOW_TRAIL_DOUBLE_MIDDLE_CYCLE,
 };
 
 struct AnimationSettings {
@@ -109,6 +115,22 @@ class LEDController {
                     break;
                 case ANIMATION_SOLID_TRAIL_DOUBLE:
                     this->solidTrailAnimationDouble(fillCount);
+                    break;
+                case ANIMATION_SOLID_TRAIL_MIDDLE:
+                    this->solidTrailAnimationMiddle(fillCount);
+                    break;
+                case ANIMATION_SOLID_TRAIL_MIDDLE_DOUBLE:
+                    this->solidTrailAnimationMiddleDouble(fillCount);
+                    break;
+                case ANIMATION_RAINBOW_TRAIL_MIDDLE:
+                    this->rainbowTrailAnimationMiddle(fillCount);
+                    break;
+                case ANIMATION_RAINBOW_TRAIL_MIDDLE_CYCLE:
+                    this->rainbowCycleTrailAnimationMiddle(fillCount);
+                    break;
+                case ANIMATION_RAINBOW_TRAIL_DOUBLE_MIDDLE_CYCLE:
+                    this->rainbowCycleTrailAnimationMiddleDouble(fillCount);
+                    break;    
             }
             if (config.delay > 0) {
                 FastLED.delay(config.delay);
@@ -139,29 +161,13 @@ class LEDController {
                 fill_solid(leds, numberOfLEDs, CRGB::Black);
                 return;
             }
-            if (numberOfLEDs % 2 == 0) {
-                if (fillCount % 2 != 0) { fillCount++; }
-                fill_rainbow(&leds[numberOfLEDs / 2 - 1], (fillCount / 2 + 1), rgb2hsv_approximate(color).hue, config.animationSettings.rainbowStep);
+            if (fillCount % 2 != 0) { fillCount++; }
 
-                for (int i = numberOfLEDs / 2 - 1; i >= 0; i--) {
-                    if(i == 0) {
-                        leds[i] = leds[numberOfLEDs - 1];
-                        break;
-                    }
+            fillCount = (numberOfLEDs % 2 == 0) ? (fillCount / 2 + 1) : (fillCount / 2 + 2);
 
-                    leds[i] = leds[numberOfLEDs - i - 1];
-                }
-            }else {
-                if (fillCount % 2 != 0) { fillCount++; }
-                fill_rainbow(&leds[numberOfLEDs / 2 - 1], (fillCount / 2 + 1), rgb2hsv_approximate(color).hue, config.animationSettings.rainbowStep);
-
-                for (int i = ceil(numberOfLEDs / 2 - 1); i >= 0; i--) {
-                    if (i == 0) {
-                        leds[i] = leds[numberOfLEDs - 1];
-                        break;
-                    }
-                    leds[i] = leds[numberOfLEDs - i - 1];
-                }
+            fill_rainbow(&leds[numberOfLEDs / 2 - 1], fillCount, rgb2hsv_approximate(color).hue, config.animationSettings.rainbowStep);
+            for (int i = ceil(numberOfLEDs / 2 - 1); i >= 0; i--) {
+                leds[i] = leds[numberOfLEDs - i - 1];
             }
         }
 
@@ -170,29 +176,13 @@ class LEDController {
                 fill_solid(leds, numberOfLEDs, CRGB::Black);
                 return;
             }
-            if (numberOfLEDs % 2 == 0) {
-                if (fillCount % 2 != 0) { fillCount++; }
-                fill_rainbow(&leds[numberOfLEDs / 2 - 1], (fillCount / 2 + 1), rainbowColor.hue, config.animationSettings.rainbowStep);
+            if (fillCount % 2 != 0) { fillCount++; }
 
-                for (int i = numberOfLEDs / 2 - 1; i >= 0; i--) {
-                    if(i == 0) {
-                        leds[i] = leds[numberOfLEDs - 1];
-                        break;
-                    }
+            fillCount = (numberOfLEDs % 2 == 0) ? (fillCount / 2 + 1) : (fillCount / 2 + 2);
 
-                    leds[i] = leds[numberOfLEDs - i - 1];
-                }
-            }else {
-                if (fillCount % 2 != 0) { fillCount++; }
-                fill_rainbow(&leds[numberOfLEDs / 2 - 1], (fillCount / 2 + 1), rainbowColor.hue, config.animationSettings.rainbowStep);
-
-                for (int i = ceil(numberOfLEDs / 2 - 1); i >= 0; i--) {
-                    if (i == 0) {
-                        leds[i] = leds[numberOfLEDs - 1];
-                        break;
-                    }
-                    leds[i] = leds[numberOfLEDs - i - 1];
-                }
+            fill_rainbow(&leds[numberOfLEDs / 2 - 1], fillCount, rainbowColor.hue, config.animationSettings.rainbowStep);
+            for (int i = ceil(numberOfLEDs / 2 - 1); i >= 0; i--) {
+                leds[i] = leds[numberOfLEDs - i - 1];
             }
         }
 
@@ -249,6 +239,220 @@ class LEDController {
                 FastLED.delay(config.animationSettings.delayTrail);
             }
         }
+
+        void solidTrailAnimationMiddle(uint8_t fillCount) {
+            static uint8_t currentStep = 0;
+            static uint8_t currentPeak = 0;
+
+            if(currentStep % config.animationSettings.countTrailStep == 0 && fillCount < currentPeak) {
+                if(currentPeak > 0) { currentPeak--; }
+                currentStep = 0;
+            }
+            fill_solid(leds, numberOfLEDs, CRGB::Black);
+            if(fillCount == 0) {
+                goto trail; 
+            }
+            if (fillCount % 2 != 0) { fillCount++; }
+
+            fillCount = (numberOfLEDs % 2 == 0) ? (fillCount / 2 + 1) : (fillCount / 2 + 2);
+            if (fillCount > currentPeak) {
+                currentPeak = fillCount;
+            }
+
+            fill_solid(&leds[numberOfLEDs / 2 - 1], fillCount, color);
+            trail:
+                if (currentPeak >= 1 && currentPeak < round(numberOfLEDs / 2)) {
+                    leds[round(numberOfLEDs / 2 - 1) + currentPeak - 1].setRGB(255, 255, 255);
+                }
+
+                for (int i = ceil(numberOfLEDs / 2 - 1); i >= 0; i--) {
+                    leds[i] = leds[numberOfLEDs - i - 1];
+                }
+
+                currentStep++;
+                if (config.animationSettings.delayTrail > 0) {
+                    FastLED.delay(config.animationSettings.delayTrail);
+                }
+        }
+
+        void solidTrailAnimationMiddleDouble(uint8_t fillCount) {
+            static uint8_t currentStep = 0;
+            static uint8_t currentPeak = 0;
+
+            if(currentStep % config.animationSettings.countTrailStep == 0 && fillCount < currentPeak) {
+                if(currentPeak > 0) { currentPeak--; }
+                currentStep = 0;
+            }
+            fill_solid(leds, numberOfLEDs, CRGB::Black);
+            if(fillCount == 0) {
+                goto trail; 
+            }
+            if (fillCount % 2 != 0) { fillCount++; }
+
+            fillCount = (numberOfLEDs % 2 == 0) ? (fillCount / 2 + 1) : (fillCount / 2 + 2);
+            if (fillCount > currentPeak) {
+                currentPeak = fillCount;
+            }
+
+            fill_solid(&leds[numberOfLEDs / 2 - 1], fillCount, color);
+            trail:
+                for(int i = 0; i < 2; i++) {
+                    if (currentPeak >= 1 && currentPeak < round(numberOfLEDs / 2)) {
+                        leds[round(numberOfLEDs / 2 - 1) + currentPeak - i].setRGB(255, 255, 255);
+                    }
+                }
+                for (int i = ceil(numberOfLEDs / 2 - 1); i >= 0; i--) {
+                    leds[i] = leds[numberOfLEDs - i - 1];
+                }
+
+                currentStep++;
+                if (config.animationSettings.delayTrail > 0) {
+                    FastLED.delay(config.animationSettings.delayTrail);
+                }
+        }
+
+        void rainbowTrailAnimationMiddle(uint8_t fillCount) {
+            static uint8_t currentStep = 0;
+            static uint8_t currentPeak = 0;
+
+            if(currentStep % config.animationSettings.countTrailStep == 0 && fillCount < currentPeak) {
+                if(currentPeak > 0) { currentPeak--; }
+                currentStep = 0;
+            }
+            fill_solid(leds, numberOfLEDs, CRGB::Black);
+            if(fillCount == 0) {
+                goto trail; 
+            }
+            if (fillCount % 2 != 0) { fillCount++; }
+
+            fillCount = (numberOfLEDs % 2 == 0) ? (fillCount / 2 + 1) : (fillCount / 2 + 2);
+            if (fillCount > currentPeak) {
+                currentPeak = fillCount;
+            }
+
+            fill_rainbow(&leds[numberOfLEDs / 2 - 1], fillCount, rgb2hsv_approximate(color).hue, config.animationSettings.rainbowStep);
+            trail:
+                if (currentPeak >= 1 && currentPeak < round(numberOfLEDs / 2)) {
+                    leds[round(numberOfLEDs / 2 - 1) + currentPeak - 1].setRGB(255, 255, 255);
+                }
+
+                for (int i = ceil(numberOfLEDs / 2 - 1); i >= 0; i--) {
+                    leds[i] = leds[numberOfLEDs - i - 1];
+                }
+
+                currentStep++;
+                if (config.animationSettings.delayTrail > 0) {
+                    FastLED.delay(config.animationSettings.delayTrail);
+                }
+        }
+
+        void rainbowTrailAnimationMiddleDouble(uint8_t fillCount) {
+            static uint8_t currentStep = 0;
+            static uint8_t currentPeak = 0;
+
+            if(currentStep % config.animationSettings.countTrailStep == 0 && fillCount < currentPeak) {
+                if(currentPeak > 0) { currentPeak--; }
+                currentStep = 0;
+            }
+            fill_solid(leds, numberOfLEDs, CRGB::Black);
+            if(fillCount == 0) {
+                goto trail; 
+            }
+            if (fillCount % 2 != 0) { fillCount++; }
+
+            fillCount = (numberOfLEDs % 2 == 0) ? (fillCount / 2 + 1) : (fillCount / 2 + 2);
+            if (fillCount > currentPeak) {
+                currentPeak = fillCount;
+            }
+
+            fill_rainbow(&leds[numberOfLEDs / 2 - 1], fillCount, rgb2hsv_approximate(color).hue, config.animationSettings.rainbowStep);
+            trail:
+                for(int i = 0; i < 2; i++) {
+                    if (currentPeak >= 1 && currentPeak < round(numberOfLEDs / 2)) {
+                        leds[round(numberOfLEDs / 2 - 1) + currentPeak - i].setRGB(255, 255, 255);
+                    }
+                }
+                for (int i = ceil(numberOfLEDs / 2 - 1); i >= 0; i--) {
+                    leds[i] = leds[numberOfLEDs - i - 1];
+                }
+
+                currentStep++;
+                if (config.animationSettings.delayTrail > 0) {
+                    FastLED.delay(config.animationSettings.delayTrail);
+                }
+        }
+
+        void rainbowCycleTrailAnimationMiddle(uint8_t fillCount) {
+            static uint8_t currentStep = 0;
+            static uint8_t currentPeak = 0;
+
+            if(currentStep % config.animationSettings.countTrailStep == 0 && fillCount < currentPeak) {
+                if(currentPeak > 0) { currentPeak--; }
+                currentStep = 0;
+            }
+            fill_solid(leds, numberOfLEDs, CRGB::Black);
+            if(fillCount == 0) {
+                goto trail; 
+            }
+            if (fillCount % 2 != 0) { fillCount++; }
+
+            fillCount = (numberOfLEDs % 2 == 0) ? (fillCount / 2 + 1) : (fillCount / 2 + 2);
+            if (fillCount > currentPeak) {
+                currentPeak = fillCount;
+            }
+
+            fill_rainbow(&leds[numberOfLEDs / 2 - 1], fillCount, rainbowColor.hue, config.animationSettings.rainbowStep);
+            trail:
+                if (currentPeak >= 1 && currentPeak < round(numberOfLEDs / 2)) {
+                    leds[round(numberOfLEDs / 2 - 1) + currentPeak - 1].setRGB(255, 255, 255);
+                }
+
+                for (int i = ceil(numberOfLEDs / 2 - 1); i >= 0; i--) {
+                    leds[i] = leds[numberOfLEDs - i - 1];
+                }
+
+                currentStep++;
+                if (config.animationSettings.delayTrail > 0) {
+                    FastLED.delay(config.animationSettings.delayTrail);
+                }
+        }
+
+        void rainbowCycleTrailAnimationMiddleDouble(uint8_t fillCount) {
+            static uint8_t currentStep = 0;
+            static uint8_t currentPeak = 0;
+
+            if(currentStep % config.animationSettings.countTrailStep == 0 && fillCount < currentPeak) {
+                if(currentPeak > 0) { currentPeak--; }
+                currentStep = 0;
+            }
+            fill_solid(leds, numberOfLEDs, CRGB::Black);
+            if(fillCount == 0) {
+                goto trail; 
+            }
+            if (fillCount % 2 != 0) { fillCount++; }
+
+            fillCount = (numberOfLEDs % 2 == 0) ? (fillCount / 2 + 1) : (fillCount / 2 + 2);
+            if (fillCount > currentPeak) {
+                currentPeak = fillCount;
+            }
+
+            fill_rainbow(&leds[numberOfLEDs / 2 - 1], fillCount, rainbowColor.hue, config.animationSettings.rainbowStep);
+            trail:
+                for(int i = 0; i < 2; i++) {
+                    if (currentPeak >= 1 && currentPeak < round(numberOfLEDs / 2)) {
+                        leds[round(numberOfLEDs / 2 - 1) + currentPeak - i].setRGB(255, 255, 255);
+                    }
+                }
+                for (int i = ceil(numberOfLEDs / 2 - 1); i >= 0; i--) {
+                    leds[i] = leds[numberOfLEDs - i - 1];
+                }
+
+                currentStep++;
+                if (config.animationSettings.delayTrail > 0) {
+                    FastLED.delay(config.animationSettings.delayTrail);
+                }
+        }
+
 };
 
 #endif
